@@ -1,3 +1,5 @@
+from cinema.booking import Booking
+
 class Screening:
   def __init__(self, title, rows, spr):
     # Store inputs
@@ -10,6 +12,12 @@ class Screening:
     self.theatre = rows * [spr * [0]]
     # Separate vacancies counter to prevent needing to iterate through matrix to count empty seats.
     self.vacancies = rows * spr
+
+    # Initialize empty dict of bookings. Shape: {'booking_id': < Booking object >}
+    self.bookings = {}
+
+    # Initialize starting booking number
+    self.new_booking_num = 1
   
   def get_vacancy(self) -> int:
     """
