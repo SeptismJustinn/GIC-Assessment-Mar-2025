@@ -1,13 +1,23 @@
+from screening.screening import Screening
+
 class Program():
   def run(self):
-    # Application start
+    ###### 1) Application start #####
     init_params = self.application_start()
     if not init_params:
       return self.exit()
     print(f"Captured: {init_params}")
+    # Create the screening session based on init params
+    screening = Screening(*init_params)
+    running = True
+    while running:
+      output = self.main_menu(screening)
+      if not output:
+        return self.exit()
+      break
     
 
-  def application_start(self):
+  def application_start(self) -> tuple[str, int, int] | None:
     """
     Function containing logic to capture requisite user inputs to initialize application
 
@@ -19,12 +29,37 @@ class Program():
 
     # Validate number of inputs
     if len(init_movie_params) != 3:
-      # Can also just fail <3 inputs and take first 3 when excess.
+      # Can also just fail when < 3 inputs and take first 3 when excess.
       exit_input = input(f"{init_movie_params} does not adhere to the format specified!\nEnter 3 to exit or any other key to retry...\n")
       if exit_input == "3":
         return
-      return self.run()
-    return init_movie_params
+      # Restart function by recursing
+      return self.application_start()
+    
+    # Validate that inputs are appropriate
+    title, row, spr = init_movie_params
+    error_message = ""
+
+    # # Validation for movies if there is a database/API to query valid movies.
+    # if not title in valid_movies:
+    #   error_message += f"{title} is not currently screening, please enter a valid movie [Title] from {valid_movies} for the 1st value!\n"
+    if not row.isnumeric():
+      error_message += f"{row} is not a valid number of [Rows], please enter an integer for the 2nd value!\n"
+    if not spr.isnumeric():
+      error_message += f"{row} is not a valid number of [Seats Per Row], please enter an integer for the 3rd value!\n"
+    
+    if error_message:
+      # If any errors found, error_message would no longer be falsy
+      exit_input = input(f"{error_message}Enter 3 to exit or any other key to retry...\n")
+      if exit_input == "3":
+        return
+      # Restart function by recursing
+      return self.application_start()
+
+    return (title, int(row), int(spr))
 
   def exit(self):
+    """
+    Method to handle exiting program
+    """
     return print("Thank you for using GIC Cinemas system. Bye!")
