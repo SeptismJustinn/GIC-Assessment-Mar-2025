@@ -57,6 +57,33 @@ class Program():
       return self.application_start()
 
     return (title, int(row), int(spr))
+  
+  def main_menu(self, screening: Screening):
+    menu = "Welcome to GIC Cinemas\n"
+    # Each item in options should be associated with a function
+    features, last_idx = screening.get_features()
+    # Reconcile available features with option numbers to display in main menu.
+    features[last_idx] = {"option": "Exit"}
+    for idx, feature in features.items():
+      menu += f"[{idx}] {feature.get('option', '')}\n"
+    menu += "Please enter your selection:\n"
+    menu_input = input(menu)
+
+    # Validate if not number entered, or number is not part of menu options.
+    if not menu_input.isnumeric() or not features.get(int(menu_input), False):
+      exit_input = input(f"\"{menu_input}\" is not valid input!\nEnter 3 to exit or any other key to try again!\n")
+      if exit_input == "3" or exit_input == 3:
+        return
+      # Restart function by recursing
+      return self.main_menu(screening)
+    
+    # Proceed with selected option
+    selected_option = features.get(int(menu_input)).get("method", None)
+    if not selected_option:
+      # If selected option does not have a defined method, return and cause exit
+      return
+    
+    selected_option()
 
   def exit(self):
     """
