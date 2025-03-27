@@ -18,26 +18,8 @@ class Screening:
     # return self._count_empty_seats()
     return self.vacancies
   
-  def get_features(self) -> dict:
-    menu = {}
-    # Convenience coding to encourage organizing of features based on placement in code block.
-    idx = 1
-
-    # Add booking feature to menu
-    menu[idx] = {
-      "option":(f"Book tickets for {self.title} ({'1 seat' if self.vacancies == 1 else f'{self.vacancies} seats'} available)"),
-      "method": self.book_tickets
-      }
-    idx += 1
-
-    # Add check bookings feature to menu
-    menu[idx] = {
-      "option": ("Check bookings"),
-      "method": self.check_bookings
-      }
-    idx += 1
-
-    return menu, idx
+  def get_title_availability(self) -> str:
+    return f"{self.title} ({self.vacancies} {'seat' if self.vacancies == 1 else 'seats'} available)"
   
   def book_tickets(self):
     print("Start booking ticekts")
