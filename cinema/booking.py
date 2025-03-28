@@ -14,14 +14,14 @@ class Booking:
     self.confirmed: bool = confirmed
 
 class Bookings:
-  def __init__(self, bookings):
+  def __init__(self, bookings=None):
     """
     bookings are dictionaries with the following shape:
     {
       booking_id: Booking object
     }
     """
-    self.bookings: dict = bookings.copy()
+    self.bookings: dict = bookings.copy() if bookings else {}
 
   def create_booking(self, tickets: int=0, selection: dict=None) -> Booking:
     booking_id = f"GIC{(len(self.bookings.values()) + 1):04d}"
