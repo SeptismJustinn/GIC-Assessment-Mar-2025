@@ -1,10 +1,11 @@
 import re
+import sys
 
 from cinema.screening import Screening
 
 class Program():
   """
-  Class bearing functions which represent the various stages of the UI. Each method is designed to recurse within itself until a valid user input
+  Class bearing functions which represent the various stages of the UI. Each method is designed to loop until a valid user input
   either exits the program or proceeds to a different UI stage.
   UI stages:
   1) start -> main_menu
@@ -19,7 +20,7 @@ class Program():
     """
     self.screening = Screening("None", 0, 0)
 
-  def start(self):
+  def l_start(self):
     """
     First stage of UI: Declaring the movie title and cinema size
     """
@@ -34,7 +35,7 @@ class Program():
       if exit_input == "3":
         return self.exit()
       # Restart function by recursing
-      return self.start()
+      return True, {}
     
     # Validate that inputs are appropriate
     title, row, spr = init_movie_params
@@ -54,16 +55,15 @@ class Program():
       if exit_input == "3":
         return self.exit()
       # Restart function by recursing
-      return self.start()
-    
+      return True, {}
     # Initialize and store screening object.
     self.screening = Screening(title, int(row), int(spr))
     
     # Proceed with next UI
-    return self.main_menu()
+    self.run(self.l_main_menu)
 
   
-  def main_menu(self):
+  def l_main_menu(self):
     """
     Second stage of UI: Deciding actions regarding declared movie screening.
     """
@@ -84,55 +84,57 @@ class Program():
       exit_input = input(f"\"{menu_input}\" is not valid input!\nEnter 3 to exit or any other key to try again!\n> ")
       if exit_input == "3":
         return self.exit()
-      # Restart function by recursing
-      return self.main_menu()
+      # Restart function by looping
+      return True, {}
     
     if menu_input == "1":
-      return self.book_tickets()
+      instructions = self.run(self.l_book_tickets)
+      return instructions.get("return", False), {}
     elif menu_input == "2":
-      return self.check_booking()
+      instructions = self.run(self.l_check_booking)
+      return instructions.get("return", False), {}
     else:
       return self.exit()
     
-  def book_tickets(self):
+  def l_book_tickets(self):
     """
     Third A stage of UI: Creating a ticket reservation.
     """
     tickets_to_book = input("Enter number of tickets to book, or enter blank to go back to main menu:\n> ")
     if tickets_to_book == "":
       # If blank, return to main menu
-      return self.main_menu()
+      return False, {"return": True}
     elif not tickets_to_book.isnumeric():
       exit_input = input(f"\"{tickets_to_book}\" is not a valid number!\nEnter 3 to exit or any other key to try again!\n> ")
       if exit_input == "3":
         return self.exit()
-      # Restart function by recursing
-      return self.book_tickets()
+      # Restart function by looping
+      return True, {}
     
     booking_id = self.screening.create_booking(int(tickets_to_book))
     if booking_id:
-      message = f"Successfully reserved {tickets_to_book} {self.screening.title} tickets.\n"
-      return self.select_seats(booking_id, init_message=message)
+      print(f"Successfully reserved {tickets_to_book} {self.screening.title} tickets.\n")
+      self.run(self.l_select_seats, booking_id)
+      # select_seats won't need to return to booking interface, but go directly back to main menu
+      return False, {"return": True}
     else:
       vacancy = self.screening.get_vacancy()
-      message = f"Sorry, there are only {vacancy} {'seat' if vacancy == 1 else 'seats'} available."
-      print(message)
-      return self.book_tickets()
+      print(f"Sorry, there are only {vacancy} {'seat' if vacancy == 1 else 'seats'} available.")
+      return True, {}
     
-  def select_seats(self, booking_id: str, init_message=""):
+  def l_select_seats(self, booking_id: str):
     """
     Fourth A stage of UI: Modifying the selected seats of an unconfirmed booking an/or confirming a booking.
     """
     # Theoretically this method is only accessed after succesfully creating a booking, so booking should never be None
     booking_id, theatre = self.screening.check_booking(booking_id)
-    message = init_message + theatre
 
     if not booking_id:
       # If booking somehow is not found, raise Exception, throwing the "Not found" message from Screening.check_booking method
       raise Exception(theatre)
 
     # Print out theatre matrix and prompt for confirmation
-    print(message)
+    print(theatre)
 
     new_seat = input("Enter blank to accept seat selection, or enter new seating position:\n> ")
 
@@ -140,7 +142,7 @@ class Program():
       # If blank, conclude booking and return to main menu
       booking_id = self.screening.confirm_booking(booking_id)
       print(f"Booking id: {booking_id} confirmed.\n")
-      return self.main_menu()
+      return False, {}
     
     # Otherwise, process input and attempt to find new seat.
     alpha_row, seat_num = self._split_alpha_num(new_seat)
@@ -149,21 +151,21 @@ class Program():
       exit_input = input(f"\"{new_seat}\" is not a valid seat number, please check the diagram again!\nEnter 3 to exit or any other key to try again!\n> ")
       if exit_input == "3":
         return self.exit()
-      # Restart function by recursing
-      return self.select_seats(booking_id)
+      # Restart function by looping
+      return True, {}
     
     # For valid inputs, attempt to switch seats for the user
     booking_id = self.screening.change_seats(booking_id, alpha_row, seat_num)
-    return self.select_seats(booking_id)
+    return True, {}
   
-  def check_booking(self):
+  def l_check_booking(self):
     """
     Third B stage of UI: Prompt and check booking ID.
     """
     booking_id = input("Enter booking id, or enter blank to go back to main menu:\n> ")
     if booking_id == "":
       # If blank, return to main menu
-      return self.main_menu()
+      return False, {"return": True}
     
     # Check if provided booking_id exists, use found_id from hereon
     found_id, message = self.screening.check_booking(booking_id)
@@ -171,19 +173,37 @@ class Program():
       exit_input = input(f"{message}Enter 3 to exit or any other key to try again!\n> ")
       if exit_input == "3":
         return self.exit()
-      # Restart function by recursing
+      # Restart function by looping
     else:
       print(message)
-    # Continuously recurse this method until main menu clicked.
-    return self.check_booking()
+    # Continuously loop this method until main menu clicked.
+    return True, {}
     
+  def run(self, method, *args, **kwargs):
+    """
+    Method for looping another method repeatedly.
 
+    Methods to be looped here are expected to return a boolean value and a dictionary containing
+    additional instructions, which can be returned to parent methods when they are exiting the loop,
+      and these instructions should be handled by the parent method that called this run().
+
+    By organizing the pages following a tree-like structure, we end up with n nested while loops, 1 for each function and
+    max(n) would be the longest consecutive page sequence, e.g. main_menu > book_tickets > select_seats.
+    This avoids the "max recursion depth reached" issue with the previous implementation, which can more easily be reached in
+    the current page structure by constantly navigating back and forth between pages, or even by checking 1000 booking numbers.
+    """
+    running = True
+    while running:
+      running, instructions = method(*args, **kwargs)
+    return instructions
 
   def exit(self):
     """
     Method to handle exiting program
     """
-    return print("Thank you for using GIC Cinemas system. Bye!")
+    print("Thank you for using GIC Cinemas system. Bye!")
+    quit()
+
   
   def _split_alpha_num(self, alphanum:str) -> tuple[str, str]:
     """
