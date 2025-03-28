@@ -10,7 +10,8 @@ class Program():
   1) start -> main_menu
   2) main_menu -> book_tickets, check_booking
   3a) book_tickets -> select_seats, main_menu
-  3b) check_booking -> main_menu
+  3b) check_booking -> check_booking, main_menu
+  4a) select_seats -> select_seats, main_menu
   """
   def __init__(self):
     """
@@ -94,6 +95,9 @@ class Program():
       return self.exit()
     
   def book_tickets(self):
+    """
+    Third A stage of UI: Creating a ticket reservation.
+    """
     tickets_to_book = input("Enter number of tickets to book, or enter blank to go back to main menu:\n> ")
     if tickets_to_book == "":
       # If blank, return to main menu
@@ -116,13 +120,16 @@ class Program():
       return self.book_tickets()
     
   def select_seats(self, booking_id: str, init_message=""):
-    booking = self.screening.check_booking(booking_id)
-    message = init_message
-    if booking:
-      # Preferably, Program class shouldn't access Booking class here, but for laziness sake and until I can think of something elaborate
-      message += f"Booking id: {booking_id}\nSelected seats:\n\n{self.screening.get_theatre(booking.seats)}\n"
-    else:
-      message += f"Booking id \"{booking_id}\" does not exist! Please check and re-enter a valid booking ID (Case-sensitive)"
+    """
+    Fourth A stage of UI: Modifying the selected seats of an unconfirmed booking an/or confirming a booking.
+    """
+    # Theoretically this method is only accessed after succesfully creating a booking, so booking should never be None
+    booking_id, theatre = self.screening.check_booking(booking_id)
+    message = init_message + theatre
+
+    if not booking_id:
+      # If booking somehow is not found, raise Exception, throwing the "Not found" message from Screening.check_booking method
+      raise Exception(theatre)
 
     # Print out theatre matrix and prompt for confirmation
     print(message)
@@ -131,7 +138,8 @@ class Program():
 
     if new_seat == "":
       # If blank, conclude booking and return to main menu
-      print(f"Booking id: {booking_id} confirmed.")
+      booking_id = self.screening.confirm_booking(booking_id)
+      print(f"Booking id: {booking_id} confirmed.\n")
       return self.main_menu()
     
     # Otherwise, process input and attempt to find new seat.
@@ -145,7 +153,7 @@ class Program():
       return self.select_seats(booking_id)
     
     # For valid inputs, attempt to switch seats for the user
-
+    booking_id = self.screening.change_seats(booking_id, alpha_row, seat_num)
     return self.select_seats(booking_id)
 
 
