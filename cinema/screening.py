@@ -1,4 +1,4 @@
-from cinema.booking import Booking
+from cinema.booking import Bookings
 
 class Screening:
   def __init__(self, title, rows, spr):
@@ -14,7 +14,8 @@ class Screening:
     self.vacancies = rows * spr
 
     # Initialize empty dict of bookings. Shape: {'booking_id': < Booking object >}
-    self.bookings = {}
+    # Could convert this to a data structure to add functionality to keep track of booking IDs
+    self.bookings = Bookings()
 
   def get_vacancy(self) -> int:
     """
@@ -120,18 +121,13 @@ class Screening:
         remaining_tickets -= availability
     
     # Create booking_id and "save" booking
-    booking_id = f"GIC{len(self.bookings.values()):04d}"
-    self.bookings[booking_id] = Booking(booking_id, selection)
+    booking = self.bookings.create_booking(selection)
 
-    return booking_id
+    return booking.id
 
   def check_booking(self, booking_id):
-    booking = self.bookings.get(booking_id, None)
-    if booking:
-      return {
-        "booking": booking,
-        "message": f"Booking id: {booking_id}\nSelected seats:\n\n{self.get_theatre(booking.seats)}\n"
-      }
+    booking = self.bookings.get_booking(booking_id, None)
+    return booking
 
   def _count_empty_seats(self) -> int:
     """
