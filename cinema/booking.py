@@ -1,5 +1,5 @@
 class Booking:
-  def __init__(self, id, count, seats={}, confirmed=False):
+  def __init__(self, id, count, seats=None, confirmed=False):
     """
     seats are dictionaries with the following shape:
     {
@@ -10,20 +10,20 @@ class Booking:
     """
     self.id: str = id
     self.count: int = count
-    self.seats: dict = seats
+    self.seats: dict = seats.copy() if seats else {}
     self.confirmed: bool = confirmed
 
 class Bookings:
-  def __init__(self, bookings={}):
+  def __init__(self, bookings):
     """
     bookings are dictionaries with the following shape:
     {
       booking_id: Booking object
     }
     """
-    self.bookings: dict = bookings
+    self.bookings: dict = bookings.copy()
 
-  def create_booking(self, tickets: int=0, selection: dict={}) -> Booking:
+  def create_booking(self, tickets: int=0, selection: dict=None) -> Booking:
     booking_id = f"GIC{(len(self.bookings.values()) + 1):04d}"
     new_booking = Booking(booking_id, tickets, selection)
     # If there are other avenues to create booking, should add validation to ensure uniqueness

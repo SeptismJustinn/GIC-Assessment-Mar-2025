@@ -27,7 +27,7 @@ class Screening:
   def get_title_availability(self) -> str:
     return f"{self.title} ({self.vacancies} {'seat' if self.vacancies == 1 else 'seats'} available)"
   
-  def get_theatre(self, selection={}):
+  def get_theatre(self, selection=None):
     # Get width of alphabet labels on left hand. Need to match this with trailing space on right to maintain symmetry
     vertical_label_width = (self.rows // 26) + 1
     row_width = self.spr * 3
@@ -46,7 +46,7 @@ class Screening:
       output = self.row_to_alpha_row(row)
       for idx, seat in enumerate(seats):
         # Check if seat is within selection, output "o" if so.
-        if idx in selection.get(row, []):
+        if selection and idx in selection.get(row, []):
           seat_repr = "o"
         elif seat == 1:
           seat_repr = "#"
