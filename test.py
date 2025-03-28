@@ -48,5 +48,16 @@ class TestMain(TestCase):
     mocked_input.side_effect = test_inputs
     program()
 
+  # @mock.patch("builtins.input")
+  # def test_2(self, mocked_input):
+  #   """
+  #   Test to ensure max recursion depth not reached or program does not stall from repeated commands.
+  #   """
+  #   print("Starting test 0: Test create booking and change seats\n")
+  #   test_inputs = ticket_booking_inputs + ["2"] + ["GIC0001" for i in range(1000000)] + ["3"]
+  #   # print(test_inputs)
+  #   mocked_input.side_effect = test_inputs
+  #   program()
+
 if __name__ == "__main__":
   main()
