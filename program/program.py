@@ -117,7 +117,14 @@ class Program():
     
   def select_seats(self, booking_id: str, init_message=""):
     booking = self.screening.check_booking(booking_id)
-    message = init_message + booking.get("message", "")
+    message = init_message
+    if booking:
+      # Preferably, Program class shouldn't access Booking class here, but for laziness sake and until I can think of something elaborate
+      message += f"Booking id: {booking_id}\nSelected seats:\n\n{self.screening.get_theatre(booking.seats)}\n"
+    else:
+      message += f"Booking id \"{booking_id}\" does not exist! Please check and re-enter a valid booking ID (Case-sensitive)"
+
+    # Print out theatre matrix and prompt for confirmation
     print(message)
 
     new_seat = input("Enter blank to accept seat selection, or enter new seating position:\n> ")
@@ -128,22 +135,17 @@ class Program():
       return self.main_menu()
     
     # Otherwise, process input and attempt to find new seat.
-    seat_alphanum = re.findall("(\d+|\D+)", new_seat.strip())
-    # Check that only an alpha set and a numeric set is passed as a seat number. E.g. AAA032
-    # Slowly break apart input 
-    valid = len(seat_alphanum) == 2
-    if valid:
-      alpha_row, seat_num = seat_alphanum
-      valid = (alpha_row.isalpha() and seat_num.isnumeric())
-    if valid:
-      valid = self.screening.check_valid_seat(alpha_row, seat_num)
-    if not valid:
+    alpha_row, seat_num = self._split_alpha_num(new_seat)
+    
+    if any([alpha_row == "", seat_num == ""]):
       exit_input = input(f"\"{new_seat}\" is not a valid seat number, please check the diagram again!\nEnter 3 to exit or any other key to try again!\n> ")
       if exit_input == "3":
         return self.exit()
       # Restart function by recursing
       return self.select_seats(booking_id)
-    print(self.screening.seat_to_row_coord(alpha_row, seat_num))
+    
+    # For valid inputs, attempt to switch seats for the user
+
     return self.select_seats(booking_id)
 
 
@@ -152,3 +154,25 @@ class Program():
     Method to handle exiting program
     """
     return print("Thank you for using GIC Cinemas system. Bye!")
+  
+  def _split_alpha_num(self, alphanum:str) -> tuple[str, str]:
+    """
+    Method to take in a string containing a mix of alphabets and numbers.
+
+    Currently configured to find
+
+    """
+    seat_alphanum = re.findall("(\d+|\D+)", alphanum.strip())
+    # Check that only an alpha set and a numeric set is passed as a seat number. E.g. AAA032
+    if len(seat_alphanum) == 2:
+      alpha_row, seat_num = seat_alphanum
+      checks = [
+        (alpha_row.isalpha() and seat_num.isnumeric()), 
+        self.screening.check_valid_seat(alpha_row, seat_num)
+      ]
+      if all(checks):
+        # If all checks passed, return the separated row and seat num strings
+        return alpha_row, seat_num
+    return "", ""
+    
+  
