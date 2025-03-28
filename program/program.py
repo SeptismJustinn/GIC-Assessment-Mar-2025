@@ -90,7 +90,7 @@ class Program():
     if menu_input == "1":
       return self.book_tickets()
     elif menu_input == "2":
-      return
+      return self.check_booking()
     else:
       return self.exit()
     
@@ -155,6 +155,28 @@ class Program():
     # For valid inputs, attempt to switch seats for the user
     booking_id = self.screening.change_seats(booking_id, alpha_row, seat_num)
     return self.select_seats(booking_id)
+  
+  def check_booking(self):
+    """
+    Third B stage of UI: Prompt and check booking ID.
+    """
+    booking_id = input("Enter booking id, or enter blank to go back to main menu:\n> ")
+    if booking_id == "":
+      # If blank, return to main menu
+      return self.main_menu()
+    
+    # Check if provided booking_id exists, use found_id from hereon
+    found_id, message = self.screening.check_booking(booking_id)
+    if not found_id:
+      exit_input = input(f"{message}Enter 3 to exit or any other key to try again!\n> ")
+      if exit_input == "3":
+        return self.exit()
+      # Restart function by recursing
+    else:
+      print(message)
+    # Continuously recurse this method until main menu clicked.
+    return self.check_booking()
+    
 
 
   def exit(self):
